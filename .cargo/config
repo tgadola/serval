@@ -1,0 +1,6 @@
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-Ctarget-feature=+crt-static", "--remap-path-prefix=C:\\Users\\user=", "-Cdebuginfo=0", "-Clink-arg=/DEBUG:NONE"]
+[target.i686-pc-windows-msvc]
+rustflags = ["-Ctarget-feature=+crt-static", "--remap-path-prefix=C:\\Users\\user=", "-Cdebuginfo=0", "-Clink-arg=/DEBUG:NONE"]
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["--remap-path-prefix=/home/user=", "-Cdebuginfo=0"]
