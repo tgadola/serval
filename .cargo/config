@@ -4,3 +4,5 @@ rustflags = ["-Ctarget-feature=+crt-static", "--remap-path-prefix=C:\\Users\\use
 rustflags = ["-Ctarget-feature=+crt-static", "--remap-path-prefix=C:\\Users\\user=", "-Cdebuginfo=0", "-Clink-arg=/DEBUG:NONE"]
 [target.x86_64-unknown-linux-gnu]
 rustflags = ["--remap-path-prefix=/home/user=", "-Cdebuginfo=0"]
+[target.i686-unknown-linux-gnu]
+rustflags = ["--remap-path-prefix=/home/user=", "-Cdebuginfo=0"]

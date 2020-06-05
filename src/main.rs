@@ -142,7 +142,7 @@ fn run(addr_string: String, cmd: String, flags: Flags) -> Result<usize> {
 
 fn main() {
     let matches = App::new("Serval")
-                .version("1.0")
+                .version("1.0.1")
                 .arg(Arg::with_name("IP")
                     .requires("PORT"))
                 .arg(Arg::with_name("PORT"))
@@ -150,7 +150,7 @@ fn main() {
                     .help("listen on 0.0.0.0 <port>")
                     .short("l")
                     .long("listen")
-                    .conflicts_with("PORT")
+                    .conflicts_with("IP")
                     .takes_value(true))
                 .arg(Arg::with_name("exec")
                     .help("Execute a program and pipe stdin/out to network")
@@ -175,7 +175,7 @@ fn main() {
         addr_string.push(':');
         let port = matches.value_of("port").unwrap();
         addr_string.push_str(port);
-    } else if !matches.is_present("IP") || !matches.is_present("IP") {
+    } else if !matches.is_present("IP") || !matches.is_present("PORT") {
             println!("Invalid usage see -h for more information");
     } else {
         let ip = matches.value_of("IP").unwrap();
@@ -183,7 +183,6 @@ fn main() {
         addr_string.push(':');
         let port = matches.value_of("PORT").unwrap();
         addr_string.push_str(port);
-        //do_connect(addr_string, cmd);
     }
 
     match run(addr_string, cmd, flags) {
