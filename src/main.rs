@@ -5,6 +5,9 @@ use std::io::{Read, Write};
 use anyhow::{Result, Error};
 use std::net::{TcpListener, TcpStream};
 
+use rustyline::Editor;
+use rustyline::error::ReadlineError;
+
 enum ReadHandle {
     Main(std::io::Stdin),
     Child(std::process::ChildStdout)
@@ -48,7 +51,35 @@ enum ProcHandles {
 
 struct Flags {
     listen: bool,
-    quiet: bool
+    quiet: bool,
+    history: bool
+}
+
+fn read_stdinput_history(mut stream: TcpStream) {
+    let mut rl = Editor::<()>::new();
+    loop {
+        let line = rl.readline("");
+        match line {
+            Ok(mut l) => {
+                rl.add_history_entry(l.as_str());
+                l.push('\n');
+                match stream.write_all(&l.into_bytes()) {
+                    Ok(()) => {},
+                    Err(e) => { println!("Encountered error sending stream: {}", e); }
+                }
+            },
+            Err(ReadlineError::Interrupted) => {
+                match stream.shutdown(std::net::Shutdown::Both) {
+                    Ok(()) => {},
+                    Err(e) => { println!("Error shutting down stream: {}", e); }
+                }
+                break;
+            },
+            Err(_e) => {
+                break
+            } 
+        }
+	}
 }
 
 fn read_stdinput(mut std_in: ReadHandle, mut stream: TcpStream) {
@@ -71,7 +102,7 @@ fn read_stdinput(mut std_in: ReadHandle, mut stream: TcpStream) {
     }
 }
 
-fn handle_conn(mut stream: TcpStream, cmd: String) -> Result<usize> {
+fn handle_conn(mut stream: TcpStream, cmd: String, history: bool) -> Result<usize> {
     let handles = if !cmd.is_empty() {
         ProcHandles::Child(Command::new(cmd)
             .stdout(std::process::Stdio::piped())
@@ -93,11 +124,16 @@ fn handle_conn(mut stream: TcpStream, cmd: String) -> Result<usize> {
             WriteHandle::Main(std::io::stdout()))
         }
     };
-
     let streamx = stream.try_clone()?;
-    thread::spawn(|| {
-        read_stdinput(s_read, streamx);
-    });
+    if history {
+        thread::spawn(|| {
+            read_stdinput_history(streamx);
+        });
+    } else { 
+        thread::spawn(|| {
+            read_stdinput(s_read, streamx);
+        });
+    }
 
     loop {
         let mut buf = [0; 4096];
@@ -137,12 +173,12 @@ fn run(addr_string: String, cmd: String, flags: Flags) -> Result<usize> {
         stream
     };
 
-    handle_conn(stream, cmd)
+    handle_conn(stream, cmd, flags.history)
 }
 
 fn main() {
     let matches = App::new("Serval")
-                .version("1.0.1")
+                .version("1.1.0")
                 .arg(Arg::with_name("IP")
                     .requires("PORT"))
                 .arg(Arg::with_name("PORT"))
@@ -161,13 +197,19 @@ fn main() {
                     .help("suppress output")
                     .short("q")
                     .long("quiet"))
+                .arg(Arg::with_name("history")
+                    .help("maintain a history")
+                    .conflicts_with("exec")
+                    .short("H")
+                    .long("history"))
                 .get_matches();
     let mut cmd = String::new();
     if matches.is_present("exec") {
         cmd.push_str(matches.value_of("exec").unwrap());
     }
-    let mut flags = Flags { listen: false, quiet: false };
+    let mut flags = Flags { listen: false, quiet: false, history: false };
     flags.quiet = matches.is_present("quiet");
+    flags.history = matches.is_present("history");
     let mut addr_string = String::new();
     if matches.is_present("port") {
         flags.listen = true;
