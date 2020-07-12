@@ -1,7 +1,7 @@
 use std::thread;
 use clap::{Arg, App};
 use std::process::Command;
-use std::io::{Read, Write};
+use std::io::{Read, Write, ErrorKind};
 use anyhow::{Result, Error};
 use std::net::{TcpListener, TcpStream};
 
@@ -76,7 +76,7 @@ fn read_stdinput_history(mut stream: TcpStream) {
                 break;
             },
             Err(_e) => {
-                break
+                break;
             } 
         }
 	}
@@ -106,6 +106,7 @@ fn handle_conn(mut stream: TcpStream, cmd: String, history: bool) -> Result<usiz
     let handles = if !cmd.is_empty() {
         ProcHandles::Child(Command::new(cmd)
             .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::null())
             .stdin(std::process::Stdio::piped())
             .spawn()
             .expect("Error spawning process")) 
@@ -147,6 +148,7 @@ fn handle_conn(mut stream: TcpStream, cmd: String, history: bool) -> Result<usiz
                     s_write.flush()?;
                 }
             }
+            Err(ref e) if e.kind() == ErrorKind::Interrupted => {}
             Err(e) => {
                 return Err(Error::new(e));
             }
